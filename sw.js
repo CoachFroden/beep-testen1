@@ -1,10 +1,11 @@
-const CACHE_NAME = "beeptest-v3";
+const CACHE_NAME = "beeptest-v4";
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./beepTest.css",
   "./beepTest.js",
+  "./audioGuard.js",
   "./uiEnhancements.js",
   "./manifest.json",
   "./icon-180.png",
