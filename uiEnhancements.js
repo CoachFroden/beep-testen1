@@ -20,17 +20,42 @@
     start: document.getElementById('startTestBtn'),
     stop: document.getElementById('pauseTestBtn'),
     reset: document.getElementById('resetTestBtn'),
-    fullscreen: document.getElementById('fullscreenBtn')
+    fullscreen: document.getElementById('fullscreenBtn'),
+    testBeep: document.getElementById('testBeepBtn')
   };
 
   let previousDone = 0;
   let statusLocked = false;
+  let testIsRunning = false;
 
   function setStatus(label, state) {
     if (!refs.status) return;
     refs.status.dataset.state = state;
     const labelNode = refs.status.querySelector('span:last-child');
     if (labelNode) labelNode.textContent = label;
+  }
+
+  function syncControlVisibility(running) {
+    testIsRunning = running;
+
+    if (refs.start) {
+      refs.start.disabled = running;
+      refs.start.classList.toggle('hidden', running);
+      refs.start.setAttribute('aria-hidden', running ? 'true' : 'false');
+      if (running) refs.start.setAttribute('tabindex', '-1');
+      else refs.start.removeAttribute('tabindex');
+    }
+
+    if (refs.testBeep) {
+      refs.testBeep.disabled = running;
+      refs.testBeep.classList.toggle('hidden', running);
+      refs.testBeep.setAttribute('aria-hidden', running ? 'true' : 'false');
+      if (running) refs.testBeep.setAttribute('tabindex', '-1');
+      else refs.testBeep.removeAttribute('tabindex');
+
+      const wrapper = refs.testBeep.closest('.participant-tools');
+      if (wrapper) wrapper.classList.toggle('hidden', running);
+    }
   }
 
   function parseLevelDisplay() {
@@ -53,7 +78,7 @@
       refs.speed.textContent = speed.toFixed(1).replace('.', ',');
     }
 
-    if (current.shuttle > 0 && !statusLocked) {
+    if (current.shuttle > 0 && !statusLocked && testIsRunning) {
       setStatus('PÅGÅR', 'running');
     }
   }
@@ -99,16 +124,19 @@
 
   refs.start?.addEventListener('click', () => {
     statusLocked = false;
+    syncControlVisibility(true);
     setStatus('STARTER', 'running');
   });
 
   refs.stop?.addEventListener('click', () => {
     statusLocked = true;
+    syncControlVisibility(false);
     setStatus('AVBRUTT', 'stopped');
   });
 
   refs.reset?.addEventListener('click', () => {
     statusLocked = true;
+    syncControlVisibility(false);
     setStatus('KLAR', 'ready');
     window.setTimeout(() => {
       updateLiveMetrics();
@@ -160,5 +188,6 @@
 
   updateNetworkStatus();
   updateLiveMetrics();
+  syncControlVisibility(false);
   window.setTimeout(() => updateParticipantMetrics(), 0);
 })();
