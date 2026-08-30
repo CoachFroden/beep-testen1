@@ -1,183 +1,235 @@
+<!doctype html>
+<html lang="no">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Beep Test – enkel gjennomføring og registrering av 20 meter shuttle run.">
   <title>Beep Test</title>
 
-  <!-- iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="BeepTest">
+  <meta name="apple-mobile-web-app-title" content="Beep Test">
+  <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- IKONER (øverst, før alt annet) -->
   <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
   <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icon-180.png">
-  <link rel="icon" href="icon-192.png">
-  <link rel="icon" href="icon-512.png">
-  
+  <link rel="icon" sizes="192x192" href="icon-192.png">
+  <link rel="icon" sizes="512x512" href="icon-512.png">
 
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2E3A4D">
-
-  <!-- CSS -->
+  <meta name="theme-color" content="#07110d">
   <link rel="stylesheet" href="beepTest.css">
 </head>
 
 <body>
-<div class="main-wrapper">
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
 
-<h1>Beep Test</h1>
+  <main class="main-wrapper">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">20 M SHUTTLE RUN</p>
+        <h1>Beep Test</h1>
+        <p class="subtitle">Kjør testen, registrer når spillerne faller ut og lagre resultatene.</p>
+      </div>
+      <button id="fullscreenBtn" class="icon-button" type="button" aria-label="Vis i fullskjerm" title="Fullskjerm">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+      </button>
+    </header>
 
-<div id="levelDisplay"></div>
+    <section class="test-console" aria-label="Teststatus">
+      <div class="console-topline">
+        <span id="testStatus" class="status-pill" data-state="ready"><span class="status-dot"></span><span>KLAR</span></span>
+        <span id="networkStatus" class="network-pill">Tilkoblet</span>
+      </div>
 
-<div id="progressContainer">
-  <div id="progressBar"></div>
-</div>
+      <div class="live-display">
+        <p class="live-label">NÅ</p>
+        <div id="levelDisplay" aria-live="polite"></div>
+      </div>
 
-<div class="controls">
-  <button onclick="startTest()">Start</button>
-  <button onclick="pauseTest()" class="danger">Avbryt</button>
-  <button onclick="resetTest()">Nullstill</button>
-  <button id="addParticipantBtn">Legg til deltaker</button>
+      <div id="progressContainer" aria-label="Shuttle-fremdrift">
+        <div class="track-line" aria-hidden="true"></div>
+        <div id="progressBar"></div>
+        <span class="turn-marker turn-marker-left" aria-hidden="true"></span>
+        <span class="turn-marker turn-marker-right" aria-hidden="true"></span>
+      </div>
 
-</div>
-<button id="manualResultBtn">
-  Legg inn resultat manuelt
-</button>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <span class="metric-label">Fart</span>
+          <strong id="speedMetric">8,5</strong>
+          <span class="metric-unit">km/t</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Aktive</span>
+          <strong id="activeMetric">0</strong>
+          <span class="metric-unit">løpere</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Registrert</span>
+          <strong id="doneMetric">0</strong>
+          <span class="metric-unit">resultater</span>
+        </div>
+      </div>
+    </section>
 
+    <section class="control-panel" aria-labelledby="controlHeading">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="eyebrow">TESTKONTROLL</p>
+          <h2 id="controlHeading">Klar til start</h2>
+        </div>
+      </div>
 
+      <div class="controls">
+        <button id="startTestBtn" class="primary-control" type="button" onclick="startTest()">
+          <span class="control-icon" aria-hidden="true">▶</span>
+          <span><strong>Start test</strong><small>Starter lyd og nedtelling</small></span>
+        </button>
+        <button id="pauseTestBtn" class="danger" type="button" onclick="pauseTest()">
+          <span class="control-icon" aria-hidden="true">■</span>
+          <span><strong>Avbryt</strong><small>Stopper testen</small></span>
+        </button>
+        <button id="resetTestBtn" class="secondary-control" type="button" onclick="resetTest()">
+          <span class="control-icon" aria-hidden="true">↺</span>
+          <span><strong>Nullstill</strong><small>Start på nytt</small></span>
+        </button>
+      </div>
+    </section>
 
-<h2>Deltakere</h2>
+    <section class="participants-section" aria-labelledby="participantsHeading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DELTAKERE</p>
+          <h2 id="participantsHeading">Spillere i testen</h2>
+          <p class="section-help">Trykk på spilleren idet han avslutter. Resultatet registreres på gjeldende nivå og shuttle.</p>
+        </div>
+        <div class="participant-summary" aria-live="polite">
+          <span><strong id="participantTotal">0</strong> totalt</span>
+          <span class="summary-separator">•</span>
+          <span><strong id="participantActive">0</strong> aktive</span>
+        </div>
+      </div>
 
-<div id="participants">
-  <button data-name="Ask">Ask</button>
-  <button data-name="Brage">Brage</button>
-  <button data-name="Gabriel">Gabriel</button>
-  <button data-name="Lars">Lars</button>
-  <button data-name="Liam">Liam</button>
-  <button data-name="Lukas">Lukas</button>
-  <button data-name="Martin">Martin</button>
-  <button data-name="Nicolai">Nicolai</button>
-  <button data-name="Noah">Noah</button>
-  <button data-name="Nytveit">Nytveit</button>
-  <button data-name="Oliver">Oliver</button>
-  <button data-name="Snorre">Snorre</button>
-  <button data-name="Sondre">Sondre</button>
-  <button data-name="Sverre">Sverre</button>
-  <button data-name="Thage">Thage</button>
-  <button data-name="Theodor">Theodor</button>
-  <button data-name="Torvald">Torvald</button>
-  <button data-name="William">William</button>
-</div>
+      <div id="lastResult" class="last-result hidden" aria-live="polite"></div>
+      <div id="participants" aria-label="Deltakere"></div>
 
-<button id="sendResultsBtn">
-  Send inn resultater
-</button>
-<button id="viewResultsBtn">Hent resultat</button>
+      <div class="participant-tools">
+        <button id="addParticipantBtn" class="tool-button" type="button">
+          <span aria-hidden="true">＋</span><span>Legg til deltaker</span>
+        </button>
+        <button id="manualResultBtn" class="tool-button" type="button">
+          <span aria-hidden="true">✎</span><span>Manuelt resultat</span>
+        </button>
+      </div>
+    </section>
 
+    <section class="results-actions" aria-label="Resultater">
+      <button id="sendResultsBtn" class="save-results" type="button">
+        <span aria-hidden="true">✓</span>
+        <span><strong>Lagre resultater</strong><small>Sender registrerte resultater til arkivet</small></span>
+      </button>
+      <button id="viewResultsBtn" class="view-results" type="button">
+        <span aria-hidden="true">▤</span>
+        <span>Se tidligere tester</span>
+      </button>
+    </section>
 
-<div id="resetModal" class="modal hidden">
-  <div class="modal-content">
-    <p id="resetText"></p>
+    <footer class="app-footer">Beep Test · 20 meter shuttle run</footer>
+  </main>
 
-    <!-- Rediger resultat -->
-    <div id="editSection" class="hidden">
-      <input
-        type="text"
-        id="editResult"
-        placeholder="f.eks. 6.4"
-        inputmode="decimal"
-      />
-    </div>
+  <div id="resetModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="resetText">
+    <div class="modal-content">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <p class="eyebrow">DELTAKER</p>
+      <h3 id="resetText"></h3>
 
-    <div class="modal-buttons">
-  <button id="confirmReset">Resett</button>
-  <button id="editBtn">Rediger</button>
-  <button id="saveEdit" class="hidden">Lagre</button>
-  <button id="removeParticipantBtn">Fjern deltaker</button>
-  <button id="cancelReset">Avbryt</button>
-</div>
-  </div>
-</div>
+      <div id="editSection" class="field-group hidden">
+        <label for="editResult">Resultat</label>
+        <input type="text" id="editResult" placeholder="f.eks. 6.4" inputmode="decimal" autocomplete="off">
+      </div>
 
-<!-- 🔽 DENNE LINJEN ER KRITISK -->
-<script type="module" src="beepTest.js" defer></script>
-
-<div id="manualResultModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Manuelt resultat</h3>
-
-    <input
-      type="text"
-      id="manualName"
-      placeholder="Navn"
-    />
-
-    <input
-      type="date"
-      id="manualDate"
-    />
-
-    <input
-      type="text"
-      id="manualLevel"
-      placeholder="Nivå (f.eks. 6.4)"
-      inputmode="decimal"
-    />
-
-    <div class="modal-buttons">
-      <button id="saveManualResult">Lagre</button>
-      <button id="cancelManualResult">Avbryt</button>
-    </div>
-  </div>
-</div>
-
-<div id="resultsModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Lagrede tester</h3>
-
-    <div id="dateList"></div>
-
-    <hr />
-
-    <div id="resultsList"></div>
-
-    <div class="modal-buttons">
-  <button id="printResultsBtn">Skriv ut</button>
-  <button id="shareResultsBtn">Send / Del</button>
-  <button id="closeResults">Lukk</button>
-</div>
-
-  </div>
-</div>
-
-</div>
-
-<div id="statusMessage" class="hidden"></div>
-
-<div id="addParticipantModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Legg til deltaker</h3>
-
-    <input
-      type="text"
-      id="newParticipantName"
-      placeholder="Navn"
-      autocomplete="off"
-    />
-
-    <div class="modal-buttons">
-      <button id="confirmAddParticipant">Legg til</button>
-      <button id="cancelAddParticipant">Avbryt</button>
+      <div class="modal-buttons">
+        <button id="confirmReset" class="secondary-control" type="button">Fjern resultat</button>
+        <button id="editBtn" type="button">Rediger resultat</button>
+        <button id="saveEdit" class="primary-control hidden" type="button">Lagre endring</button>
+        <button id="removeParticipantBtn" class="danger" type="button">Fjern deltaker</button>
+        <button id="cancelReset" class="ghost-button" type="button">Lukk</button>
+      </div>
     </div>
   </div>
-</div>
 
+  <div id="manualResultModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="manualResultTitle">
+    <div class="modal-content">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <p class="eyebrow">RESULTAT</p>
+      <h3 id="manualResultTitle">Legg inn manuelt</h3>
 
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
-  }
-</script>
+      <div class="field-group">
+        <label for="manualName">Navn</label>
+        <input type="text" id="manualName" placeholder="Navn" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label for="manualDate">Dato</label>
+        <input type="date" id="manualDate">
+      </div>
+      <div class="field-group">
+        <label for="manualLevel">Nivå og shuttle</label>
+        <input type="text" id="manualLevel" placeholder="f.eks. 6.4" inputmode="decimal" autocomplete="off">
+      </div>
 
+      <div class="modal-buttons">
+        <button id="saveManualResult" class="primary-control" type="button">Lagre resultat</button>
+        <button id="cancelManualResult" class="ghost-button" type="button">Avbryt</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="resultsModalTitle">
+    <div class="modal-content results-modal-content">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <p class="eyebrow">HISTORIKK</p>
+      <h3 id="resultsModalTitle">Lagrede tester</h3>
+
+      <div id="dateList" class="date-list"></div>
+      <div class="modal-divider"></div>
+      <div id="resultsList"></div>
+
+      <div class="modal-buttons">
+        <button id="printResultsBtn" type="button">Skriv ut</button>
+        <button id="shareResultsBtn" class="primary-control" type="button">Send / del</button>
+        <button id="closeResults" class="ghost-button" type="button">Lukk</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="addParticipantModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="addParticipantTitle">
+    <div class="modal-content">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <p class="eyebrow">DELTAKER</p>
+      <h3 id="addParticipantTitle">Legg til deltaker</h3>
+
+      <div class="field-group">
+        <label for="newParticipantName">Navn</label>
+        <input type="text" id="newParticipantName" placeholder="Navn" autocomplete="off">
+      </div>
+
+      <div class="modal-buttons">
+        <button id="confirmAddParticipant" class="primary-control" type="button">Legg til</button>
+        <button id="cancelAddParticipant" class="ghost-button" type="button">Avbryt</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="statusMessage" class="hidden" role="status" aria-live="polite"></div>
+
+  <script type="module" src="beepTest.js"></script>
+  <script src="uiEnhancements.js" defer></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    }
+  </script>
 </body>
 </html>
