@@ -18,7 +18,7 @@
 
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#07110d">
-  <link rel="stylesheet" href="beepTest.css">
+  <link rel="stylesheet" href="beepTest.css?v=7">
 </head>
 
 <body>
@@ -230,12 +230,12 @@
 
   <div id="statusMessage" class="hidden" role="status" aria-live="polite"></div>
 
-  <script src="audioGuard.js"></script>
-  <script type="module" src="beepTest.js"></script>
-  <script src="uiEnhancements.js" defer></script>
+  <script src="audioGuard.js?v=7"></script>
+  <script type="module" src="beepTest.js?v=7"></script>
+  <script src="uiEnhancements.js?v=7" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js?v=7"));
     }
   </script>
 </body>
