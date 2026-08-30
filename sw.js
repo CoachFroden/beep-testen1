@@ -1,4 +1,4 @@
-const CACHE_NAME = "beeptest-v5";
+const CACHE_NAME = "beeptest-v6";
 
 const APP_SHELL = [
   "./",
