@@ -1,12 +1,12 @@
-const CACHE_NAME = "beeptest-v6";
+const CACHE_NAME = "beeptest-v7";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./beepTest.css",
-  "./beepTest.js",
-  "./audioGuard.js",
-  "./uiEnhancements.js",
+  "./beepTest.css?v=7",
+  "./beepTest.js?v=7",
+  "./audioGuard.js?v=7",
+  "./uiEnhancements.js?v=7",
   "./manifest.json",
   "./icon-180.png",
   "./icon-192.png",
@@ -67,6 +67,23 @@ self.addEventListener("fetch", event => {
           return response;
         })
         .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  const isCodeAsset = /\.(?:js|css)$/.test(url.pathname);
+
+  if (isCodeAsset) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
