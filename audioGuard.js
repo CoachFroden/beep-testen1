@@ -6,6 +6,7 @@
   let testBuffer = null;
   let testActive = false;
   let lastWarningAt = 0;
+  const activeMedia = new Set();
 
   function updateAudioMessage(message, isWarning = false) {
     const status = document.getElementById("audioCheckStatus");
@@ -130,6 +131,16 @@
     }
   }
 
+  function stopAllMediaAudio() {
+    activeMedia.forEach(media => {
+      try {
+        media.pause();
+        media.currentTime = 0;
+      } catch (_) {}
+    });
+    activeMedia.clear();
+  }
+
   // iOS kan suspendere Web Audio mens vanlig Audio() spiller intro/nedtelling.
   // Vi prøver derfor å vekke samme AudioContext jevnlig mens testen er aktiv.
   window.setInterval(() => {
@@ -146,17 +157,32 @@
     window.addEventListener(eventName, wakeAudio, { passive: true, capture: true });
   });
 
-  // Når intro/nedtelling med HTMLAudio er ferdig, vekk Web Audio umiddelbart.
+  // Spor alle vanlige lydfiler som brukes av testen. Dette gjør at Avbryt/Nullstill
+  // kan stoppe intro, nedtelling, nivåstemme og startlyder umiddelbart.
   const nativeMediaPlay = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function (...args) {
+    // Hindrer at en gammel onended-kjede starter neste lyd etter at testen er avbrutt.
+    if (!testActive) {
+      return Promise.reject(new DOMException("Beep test is not active", "AbortError"));
+    }
+
+    activeMedia.add(this);
+
+    const cleanup = () => activeMedia.delete(this);
     this.addEventListener("ended", () => {
+      cleanup();
       if (testActive) {
         wakeAudio();
         window.setTimeout(wakeAudio, 80);
       }
     }, { once: true });
+    this.addEventListener("error", cleanup, { once: true });
 
-    return nativeMediaPlay.apply(this, args);
+    const result = nativeMediaPlay.apply(this, args);
+    if (result?.catch) {
+      result.catch(() => cleanup());
+    }
+    return result;
   };
 
   const startButton = document.getElementById("startTestBtn");
@@ -165,25 +191,28 @@
   const testButton = document.getElementById("testBeepBtn");
 
   startButton?.addEventListener("click", () => {
+    stopAllMediaAudio();
     testActive = true;
     wakeAudio();
     window.setTimeout(wakeAudio, 50);
     window.setTimeout(wakeAudio, 250);
-  });
+  }, { capture: true });
 
-  stopButton?.addEventListener("click", () => {
+  function abortAudioImmediately() {
     testActive = false;
-  });
+    stopAllMediaAudio();
+  }
 
-  resetButton?.addEventListener("click", () => {
-    testActive = false;
-  });
+  // Capture gjør at lyden stoppes før knappens vanlige onclick-handler kjører.
+  stopButton?.addEventListener("click", abortAudioImmediately, { capture: true });
+  resetButton?.addEventListener("click", abortAudioImmediately, { capture: true });
 
   testButton?.addEventListener("click", playTestBeep);
 
   window.__beepAudioGuard = {
     ensureRunning,
     playTestBeep,
+    stopAllMediaAudio,
     getContext: () => primaryContext
   };
 })();
