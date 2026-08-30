@@ -96,6 +96,12 @@
           <span><strong>Nullstill</strong><small>Start på nytt</small></span>
         </button>
       </div>
+
+      <div class="participant-tools">
+        <button id="testBeepBtn" class="tool-button" type="button">
+          <span aria-hidden="true">🔊</span><span>Test beep før start</span>
+        </button>
+      </div>
     </section>
 
     <section class="participants-section" aria-labelledby="participantsHeading">
@@ -224,6 +230,7 @@
 
   <div id="statusMessage" class="hidden" role="status" aria-live="polite"></div>
 
+  <script src="audioGuard.js"></script>
   <script type="module" src="beepTest.js"></script>
   <script src="uiEnhancements.js" defer></script>
   <script>
