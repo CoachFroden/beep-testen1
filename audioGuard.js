@@ -141,6 +141,11 @@
     activeMedia.clear();
   }
 
+  function abortAudioImmediately() {
+    testActive = false;
+    stopAllMediaAudio();
+  }
+
   // iOS kan suspendere Web Audio mens vanlig Audio() spiller intro/nedtelling.
   // Vi prøver derfor å vekke samme AudioContext jevnlig mens testen er aktiv.
   window.setInterval(() => {
@@ -198,14 +203,27 @@
     window.setTimeout(wakeAudio, 250);
   }, { capture: true });
 
-  function abortAudioImmediately() {
-    testActive = false;
-    stopAllMediaAudio();
-  }
+  // På iPhone/PWA kan click komme senere enn selve fingertrykket.
+  // Stopp derfor lyden allerede på touchstart/pointerdown, og behold click som fallback.
+  [stopButton, resetButton].forEach(button => {
+    if (!button) return;
 
-  // Capture gjør at lyden stoppes før knappens vanlige onclick-handler kjører.
-  stopButton?.addEventListener("click", abortAudioImmediately, { capture: true });
-  resetButton?.addEventListener("click", abortAudioImmediately, { capture: true });
+    button.addEventListener("touchstart", abortAudioImmediately, {
+      capture: true,
+      passive: true
+    });
+    button.addEventListener("pointerdown", abortAudioImmediately, {
+      capture: true,
+      passive: true
+    });
+    button.addEventListener("click", abortAudioImmediately, { capture: true });
+  });
+
+  // Ekstra delegert iOS-fallback dersom en PWA ikke leverer target-listener som forventet.
+  document.addEventListener("touchstart", event => {
+    const target = event.target instanceof Element ? event.target.closest("#pauseTestBtn, #resetTestBtn") : null;
+    if (target) abortAudioImmediately();
+  }, { capture: true, passive: true });
 
   testButton?.addEventListener("click", playTestBeep);
 
